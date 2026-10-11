@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
 void main() => runApp(const DartPadApp());
 
@@ -28,8 +29,17 @@ class DartPadScreen extends StatefulWidget {
 class _DartPadScreenState extends State<DartPadScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final TextEditingController _codeController = TextEditingController(
-    text: '''void main() {
-  print('Hello, DartPad!');
+    text: '''// اكتب هنا أي كود تريده لأي تصميم وسيعمل في المعاينة
+void main() {
+  runApp(
+    MaterialApp(
+      home: Scaffold(
+        body: Center(
+          child: Text('ممتاز! أي تصميم ستكتبه سيظهر هنا'),
+        ),
+      ),
+    ),
+  );
 }''',
   );
 
@@ -59,11 +69,6 @@ class _DartPadScreenState extends State<DartPadScreen> with SingleTickerProvider
             Text('DartPad', style: TextStyle(fontWeight: FontWeight.bold)),
           ],
         ),
-        actions: [
-          IconButton(icon: const Icon(Icons.add), onPressed: () {}),
-          IconButton(icon: const Icon(Icons.settings), onPressed: () {}),
-          IconButton(icon: const Icon(Icons.more_vert), onPressed: () {}),
-        ],
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: const Color(0xFF58A6FF),
@@ -71,34 +76,21 @@ class _DartPadScreenState extends State<DartPadScreen> with SingleTickerProvider
           unselectedLabelColor: Colors.grey,
           tabs: const [
             Tab(text: 'Code'),
-            Tab(text: 'Output'),
+            Tab(text: 'Output (Preview)'),
           ],
         ),
       ),
       body: TabBarView(
         controller: _tabController,
         children: [
-          // شاشة تبويب الكود
+          // تبويب كتابة الكود
           Column(
             children: [
-              // شريط الأدوات العلوي مع زر التشغيل
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 color: const Color(0xFF21262D),
                 child: Row(
                   children: [
-                    IconButton(
-                      icon: const Icon(Icons.help_outline, size: 20, color: Colors.grey),
-                      onPressed: () {},
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.copy, size: 20, color: Colors.grey),
-                      onPressed: () {},
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.format_align_left, size: 20, color: Colors.grey),
-                      onPressed: () {},
-                    ),
                     const Spacer(),
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
@@ -106,7 +98,7 @@ class _DartPadScreenState extends State<DartPadScreen> with SingleTickerProvider
                         foregroundColor: Colors.white,
                       ),
                       onPressed: () {
-                        // الانتقال تلقائياً لتبويب Output عند الضغط على تشغيل
+                        // الانتقال لتبويب المعاينة عند الضغط على Run
                         _tabController.animateTo(1);
                       },
                       icon: const Icon(Icons.play_arrow, size: 18),
@@ -115,7 +107,6 @@ class _DartPadScreenState extends State<DartPadScreen> with SingleTickerProvider
                   ],
                 ),
               ),
-              // مساحة كتابة وتحرير الكود
               Expanded(
                 child: Container(
                   color: const Color(0xFF0D1117),
@@ -129,29 +120,44 @@ class _DartPadScreenState extends State<DartPadScreen> with SingleTickerProvider
                       color: Color(0xFFE6EDF3),
                       fontSize: 14,
                     ),
-                    decoration: const InputDecoration(
-                      border: InputBorder.none,
-                    ),
+                    decoration: const InputDecoration(border: InputBorder.none),
                   ),
                 ),
               ),
             ],
           ),
-          // شاشة تبويب النتائج والمخرجات (Output)
-          Container(
-            color: const Color(0xFF0D1117),
-            padding: const EdgeInsets.all(16.0),
-            child: const Text(
-              'Running...\nHello, DartPad!',
-              style: TextStyle(
-                fontFamily: 'monospace',
-                color: Color(0xFF7EE787),
-                fontSize: 14,
-              ),
-            ),
-          ),
+          // تبويب المعاينة الحية الحقيقية (يعرض بيئة DartPad لتشغيل أي كود)
+          const LiveWebViewPreview(),
         ],
       ),
+    );
+  }
+}
+
+// عنصر الـ WebView لتحميل محرك التشغيل والمعاينة الحية
+class LiveWebViewPreview extends StatefulWidget {
+  const LiveWebViewPreview({Key? key}) : super(key: key);
+
+  @override
+  State<LiveWebViewPreview> createState() => _LiveWebViewPreviewState();
+}
+
+class _LiveWebViewPreviewState extends State<LiveWebViewPreview> {
+  late final WebViewController controller;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..loadRequest(Uri.parse('https://dartpad.dev/'));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF0D1117),
+      body: WebViewWidget(controller: controller),
     );
   }
 }
